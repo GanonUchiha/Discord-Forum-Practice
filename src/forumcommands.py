@@ -4,7 +4,7 @@ from time import sleep
 
 import discord
 from discord.ext import commands
-from discord import TextStyle, Webhook, app_commands, AppCommandType, Interaction, ButtonStyle
+from discord import ForumTag, TextStyle, Webhook, app_commands, AppCommandType, Interaction, ButtonStyle
 from discord.ext.commands import Bot
 from discord.app_commands import CommandTree, ContextMenu, Command, Group, describe, Choice
 from discord.channel import ForumChannel
@@ -19,13 +19,37 @@ class ChannelDropdown(discord.ui.Select):
     
     async def callback(self, interaction: Interaction):
         # print(interaction.data["component_type"])
-        return await super().callback(interaction)
+        # await interaction.response.edit_message(content="Choose a channel...")
+        await interaction.response.defer()
+
+class TagsDropdown(discord.ui.Select):
+
+    def __init__(self, tags_list: List[ForumTag]):
+        options = [discord.SelectOption(label=tag.name, value=str(tag.id)) for tag in tags_list]
+        super().__init__(options=options, placeholder="Select tag(s)...", min_values=0, max_values=min(5, len(options)))
+    
+    async def callback(self, interaction: Interaction):
+        # print(interaction.data["component_type"])
+        # return await super().callback(interaction)
+        await interaction.response.defer()
 
 class SelectChannelMessage(discord.ui.View):
 
     def add_components(self, channel_list: List[ForumChannel]):
         self.channel_dropdown = ChannelDropdown(channel_list)
         self.add_item(self.channel_dropdown)
+
+class SelectMessage(discord.ui.View):
+
+    def add_components(self, dropdown: discord.ui.Select):
+        self.dropdown = dropdown
+        self.confirm_button = discord.ui.Button(label="Confirm")
+
+        self.dropdown_id = self.dropdown.custom_id
+        self.button_id = self.confirm_button.custom_id
+
+        self.add_item(self.dropdown)
+        self.add_item(self.confirm_button)
 
 class ThreadContentDialogue(discord.ui.Modal):
     title_inputbox = discord.ui.TextInput(label="Title:", placeholder="Enter title", row=0)
@@ -36,7 +60,8 @@ class ThreadContentDialogue(discord.ui.Modal):
 
     async def on_submit(self, interaction: Interaction):
         # print(interaction.user, interaction.data)
-        await interaction.response.send_message(f'Thanks for your response, {interaction.user}!', ephemeral=True)
+        # await interaction.response.send_message(f'Thanks for your response, {interaction.user}!', ephemeral=True)
+        await interaction.response.defer()
 
 class ForumCommands(commands.Cog):
 
@@ -109,6 +134,7 @@ class ForumCommands(commands.Cog):
         else:
             await ctx.send("Channel {} is not a forum channel.")
 
+
     @app_commands.command(name="create-forum-thread-interactive", description="Create a forum post through a sequence of interactions")
     async def create_forum_thread_interactive(self, interaction: Interaction):
         '''
@@ -125,16 +151,26 @@ class ForumCommands(commands.Cog):
         # Wait until the user interacts with the modal
         res: Interaction = await self.bot.wait_for('interaction', check=lambda interact: interact.data["custom_id"] == modal.custom_id)
 
+        selected_channel = await self.ask_select_channel(interaction, forum_channels)
+        selected_tags: List[ForumTag] = await self.ask_select_tags(interaction, selected_channel)
+
+        # Create the thread
+        thread, _ = await selected_channel.create_thread(name=modal.title_inputbox.value, content=modal.content_inputbox.value, applied_tags=selected_tags)
+        await interaction.followup.send(content="Thread created at: {}".format(thread.jump_url), ephemeral=True)
+
+    async def ask_select_channel(self, interaction: Interaction, forum_channels: List[ForumChannel]) -> ForumChannel:
+
         # Prompt user to select the forum channel they want to create the thread in
-        view = SelectChannelMessage()
-        view.add_components(forum_channels)
+        view = SelectMessage()
+        select_options = ChannelDropdown(forum_channels)
+        view.add_components(select_options)
         response1 = await interaction.followup.send(content="Create Thread in:", view=view, ephemeral=True, wait=True)
 
         # Wait until the user interacts with the dropdown box
-        res: Interaction = await self.bot.wait_for('interaction', check=lambda interact: interact.data["component_type"] == 3 and interact.user == interaction.user)
+        await self.bot.wait_for('interaction', check=lambda interact: interact.data["custom_id"] == view.button_id)
         for item in view.children:
             # print(item.custom_id, res.data["custom_id"])
-            if item.custom_id == res.data["custom_id"]:
+            if item.custom_id == view.dropdown_id:
                 select: discord.ui.Select = item
                 channel_id = int(select.values[0])
         
@@ -142,9 +178,32 @@ class ForumCommands(commands.Cog):
         selected_channel: ForumChannel = interaction.guild.get_channel(channel_id)
         await interaction.followup.edit_message(message_id=response1.id, content="Channel: {}".format(selected_channel.name), view=None)
 
-        # Create the thread
-        thread, _ = await selected_channel.create_thread(name=modal.title_inputbox.value, content=modal.content_inputbox.value)
-        await interaction.followup.send(content="Thread created at: {}".format(thread.jump_url), ephemeral=True)
+        return selected_channel
+    
+    async def ask_select_tags(self, interaction: Interaction, selected_channel: ForumChannel):
+        all_tags = selected_channel.available_tags
+        
+        # Prompt user to select the forum channel they want to create the thread in
+        view = SelectMessage()
+        select_options = TagsDropdown(all_tags)
+        view.add_components(select_options)
+        response1 = await interaction.followup.send(content="Select tags:", view=view, ephemeral=True, wait=True)
+
+        # Wait until the user interacts with the dropdown box
+        await self.bot.wait_for('interaction', check=lambda interact: interact.data["custom_id"] == view.button_id)
+        for item in view.children:
+            # print(item.custom_id, res.data["custom_id"])
+            if item.custom_id == view.dropdown_id:
+                select: discord.ui.Select = item
+                selected_ids: List[str] = select.values
+        
+        # Edit out the dropdown box after user selects
+        # selected_channel: ForumChannel = interaction.guild.get_channel(channel_id)
+        selected_tags = [tag for tag in selected_channel.available_tags if str(tag.id) in selected_ids]
+        tags_str = ", ".join([tag.name for tag in selected_tags])
+        await interaction.followup.edit_message(message_id=response1.id, content="Tags: {}".format(tags_str), view=None)
+
+        return selected_tags
 
     @commands.hybrid_command(name="create-forum-thread")
     @describe(channel_id="Forum ID")
