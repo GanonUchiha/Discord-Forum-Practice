@@ -8,7 +8,7 @@ import json
 import asyncio
 
 from discord.ext import commands, tasks
-from discord import Guild, File
+from discord import Guild, File, Thread
 from discord.ext.commands import Context
 from discord.channel import ForumChannel
 
@@ -158,22 +158,22 @@ async def archive_post(target_thread: BHThread, post: BahamutPost, channel: Foru
     post_hashtags = post.hashtags
     applied_tags = [tag for tag in channel.available_tags if tag.name in post_hashtags]
 
-    if len(post_content) > 2000: # Longer posts Are sent as text files
-        with Path("content.txt").open("w") as fp:
+    if len(post_content) > 3000: # Longer posts Are sent as text files
+        with Path("content.txt").open("w", encoding="utf8") as fp:
             fp.write(post_content)
-        with Path("content.txt") as path:
+        with Path("content.txt", encoding="utf8") as path:
             # Create the thread
-            await channel.create_thread(
+            thread: Thread = await channel.create_thread(
                 name=f"{post.title} {post.floor}樓",
                 file=File(path),
-                applied_tags=applied_tags
+                applied_tags=applied_tags,
             )
     else:
         # Create the thread
-        await channel.create_thread(
+        thread: Thread = await channel.create_thread(
             name=f"{post.title} {post.floor}樓",
             content=post_content,
-            applied_tags=applied_tags
+            applied_tags=applied_tags,
         )
 
 async def setup(bot: commands.Bot) -> None:
