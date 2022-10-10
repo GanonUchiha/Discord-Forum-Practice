@@ -112,6 +112,11 @@ class BHVTuberGossip(commands.Cog):
     async def stop(self, ctx: Context):
         self.fetch_posts.cancel()
         await ctx.send("已強制暫停爬取討論版。")
+
+    @commands.command()
+    async def reload(self, ctx: Context):
+        self.load_config()
+        await ctx.send("已重新讀取目標討論版清單")
     
 async def fetch_thread_posts(target_thread: BHThread, channel: ForumChannel) -> int:
 
