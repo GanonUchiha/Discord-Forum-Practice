@@ -7,7 +7,6 @@ from bs4 import Tag, BeautifulSoup
 import json
 import asyncio
 
-# import discord
 from discord.ext import commands, tasks
 from discord import Guild, File
 from discord.ext.commands import Context
@@ -74,7 +73,7 @@ class BHVTuberGossip(commands.Cog):
     def cog_unload(self):
         self.fetch_posts.cancel()
 
-    @tasks.loop(minutes=10)
+    @tasks.loop(minutes=20)
     async def fetch_posts(self):
         for guild_config in self.config["guilds"]:
             guild: Guild = self.bot.get_guild(guild_config["guild-id"])
@@ -89,21 +88,25 @@ class BHVTuberGossip(commands.Cog):
                     target_thread = BHThread(target[0], target[1], target[2])
                     last_floor = await fetch_thread_posts(target_thread, channel)
                     target[2] = last_floor + 1
-
         self.save_config()
     
+    @fetch_posts.after_loop()
+    async def fetch_posts_stopped(self):
+        print("The bot stopped")
+    
+    # Basic commands
     @commands.command()
     async def start(self, ctx: Context):
         self.fetch_posts.start()
         await ctx.send("已開始爬取討論版。")
 
     @commands.command()
-    async def stop(self, ctx: Context):
+    async def pause(self, ctx: Context):
         self.fetch_posts.stop()
         await ctx.send("已下令暫停爬取討論版，機器人將在稍後自行停止。")
 
     @commands.command()
-    async def cancel(self, ctx: Context):
+    async def stop(self, ctx: Context):
         self.fetch_posts.cancel()
         await ctx.send("已強制暫停爬取討論版。")
     
@@ -115,9 +118,11 @@ async def fetch_thread_posts(target_thread: BHThread, channel: ForumChannel) -> 
     pages_btn_row = soup.find("p", attrs={"class": "BH-pagebtnA"})
     top_post = BahamutPost(get_posts(soup)[0])
     target_thread.set_title(top_post.title)
+
     num_pages = int(pages_btn_row.find_all("a")[-1].text)
+    pages_per_batch = 5
     page_start = target_thread.start_page
-    page_end = min(num_pages + 1, page_start + 3)
+    page_end = min(num_pages + 1, page_start + pages_per_batch)
 
     for page in range(page_start, page_end):
         page_url = target_thread.page_url(page=page)
@@ -137,9 +142,11 @@ async def archive_page(target_thread: BHThread, posts_raw: List[Tag], page_url: 
 
     for post_raw in posts_raw:
         post = BahamutPost(post_raw, page_url)
+        if int(post.floor) < target_thread.start_floor:
+            continue
         await archive_post(target_thread, post, channel)
         last_floor = int(post.floor)
-        sleep(2)
+        sleep(3)
     
     return last_floor
 

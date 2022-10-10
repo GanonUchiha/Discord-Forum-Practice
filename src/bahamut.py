@@ -126,7 +126,7 @@ class BahamutPost:
         # Replace image Tag with image URL
         for img in post_body.find_all("a", attrs={"class": "photoswipe-image"}):
             img: Tag
-            img = img.replace_with(img.attrs["href"])
+            img = img.replace_with(img.attrs["href"]+"\n")
 
         # Replace YouTube embeds with origininal video URL
         for yt in post_body.find_all("div", attrs={"class": "video-youtube"}):
