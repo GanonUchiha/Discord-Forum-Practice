@@ -1,22 +1,19 @@
 
 from pathlib import Path
 import requests
-from typing import Union, List, Tuple, Optional
-from abc import ABC, abstractmethod
+from typing import Union, List
 from time import sleep
 from bs4 import Tag, BeautifulSoup
 import json
 import asyncio
-from math import floor
 
-import discord
+# import discord
 from discord.ext import commands, tasks
-from discord import InteractionResponded, app_commands, Interaction, Thread, Guild
-from discord.ext.commands import Bot, Context
-from discord.app_commands import CommandTree, ContextMenu, Command, Group, describe, Choice
+from discord import Guild, File
+from discord.ext.commands import Context
 from discord.channel import ForumChannel
 
-from settings import SharedVariables, BotEssentials
+from settings import BotEssentials
 from bahamut import BahamutPost, get_webpage, get_posts
 from mycredentials import BOT_TOKEN
 
@@ -159,7 +156,7 @@ async def archive_post(target_thread: BHThread, post: BahamutPost, channel: Foru
             # Create the thread
             await channel.create_thread(
                 name=f"{post.title} {post.floor}樓",
-                file=discord.File(path),
+                file=File(path),
                 applied_tags=applied_tags
             )
     else:
