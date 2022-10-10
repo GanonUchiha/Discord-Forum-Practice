@@ -10,24 +10,26 @@ URL_PREFIX = "https://forum.gamer.com.tw/"
 
 class PostMetadata:
 
-    def __init__(self, title: str, floor: str, username: str, userid: str):
+    def __init__(self, title: str, floor: str, username: str, userid: str, link: str):
         self.title = title
         self.floor = floor
         self.username = username
         self.userid = userid
+        self.link = link
     
     @property
     def info(self):
-        return "{title} #{floor}\nAuthor: {username}({userid})".format(
+        return "{title} `#{floor}`\nAuthor: {username}({userid})\nLink: <{link}>".format(
             title = self.title,
             floor = self.floor,
             username = self.username,
-            userid = self.userid
+            userid = self.userid,
+            link = self.link
         )
 
 
 
-def extract_post_header(post: Tag) -> PostMetadata:
+def extract_post_header(post: Tag, original_link: str) -> PostMetadata:
     '''
     Extracts the header from a post.
 
@@ -47,15 +49,22 @@ def extract_post_header(post: Tag) -> PostMetadata:
     except:
         post_title = "No Title"
     post_floor = post_header.find("a", attrs={"class": "tippy-gpbp"}).attrs["data-floor"]
+    post_href = post_header.find("a", attrs={"class": "tippy-gpbp"}).attrs["href"]
     post_username = post_header.find("a", attrs={"class": "username"}).text
     post_userid = post_header.find("a", attrs={"class": "userid"}).text
     # print("#{} by {}({})".format(post_floor, post_username, post_userid))
     
+    if post_href != "":
+        post_link = URL_PREFIX + post_href
+    else:
+        post_link = original_link
+
     post_metadata = {
         "title": post_title,
         "floor": post_floor,
         "username": post_username,
-        "userid": post_userid
+        "userid": post_userid,
+        "link": post_link
     }
     return PostMetadata(**post_metadata)
 
@@ -131,7 +140,7 @@ def main():
     posts: List[Tag] = get_posts(soup)
     # print([post.attrs for post in posts])
     
-    post_metadata: PostMetadata = extract_post_header(posts[0])
+    post_metadata: PostMetadata = extract_post_header(posts[0], test_link)
     post_body_text: str = extract_post_body(posts[0]).strip()
     post_hashtags: List[str] = extract_hashtags_from_text(post_body_text)
     
