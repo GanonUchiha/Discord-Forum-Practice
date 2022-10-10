@@ -27,8 +27,6 @@ class PostMetadata:
             link = self.link
         )
 
-
-
 def extract_post_header(post: Tag, original_link: str) -> PostMetadata:
     '''
     Extracts the header from a post.
@@ -124,14 +122,18 @@ def get_posts(soup: BeautifulSoup) -> List[Tag]:
     sections: List[Tag] = soup.find_all("section", attrs={"class": "c-section"})
     return [tag for tag in sections if "id" in tag.attrs]
 
+def get_webpage(url: str) -> requests.Response:
+    headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+               "AppleWebKit/537.36 (KHTML, like Gecko)"
+               "Chrome/84.0.4147.105 Safari/537.36"}
+    response: requests.Response = requests.get(url, headers=headers)
+    return response
+
 def main():
     test_link = input("Enter URL: ")
     print(urlparse(test_link))
 
-    headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-               "AppleWebKit/537.36 (KHTML, like Gecko)"
-               "Chrome/84.0.4147.105 Safari/537.36"}
-    response: requests.Response = requests.get(test_link, headers=headers)
+    response: requests.Response = get_webpage(test_link)
     
     with open("test.html", "w", encoding="utf8") as fp:
         fp.write(response.text)

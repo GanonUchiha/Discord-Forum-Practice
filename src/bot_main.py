@@ -13,6 +13,7 @@ from settings import BotEssentials
 import basiccommands
 import forumcommands
 import countercommand
+import bahamutarchiver
 
 # Setting up the bot
 BotEssentials.setup_bot()
@@ -79,6 +80,7 @@ def main():
     asyncio.run(basiccommands.setup(BotEssentials.bot))
     asyncio.run(forumcommands.setup(BotEssentials.bot))
     asyncio.run(countercommand.setup(BotEssentials.bot))
+    asyncio.run(bahamutarchiver.setup(BotEssentials.bot))
 
     BotEssentials.bot.run(BOT_TOKEN)
 
