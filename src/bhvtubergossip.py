@@ -60,21 +60,23 @@ class BHVTuberGossip(commands.Cog):
 
         self.config_file = Path(config_file)
         self.load_config()
-        print("Config Loaded.")
 
     def load_config(self):
         with self.config_file.open(encoding="utf8") as fp:
             self.config = json.load(fp)
+        print("[CONFIG] Config Loaded.")
 
     def save_config(self):
         with self.config_file.open("w", encoding="utf8") as fp:
             json.dump(self.config, fp, indent=4)
+        print("[CONFIG] Config Saved.")
 
     def cog_unload(self):
         self.fetch_posts.cancel()
 
     @tasks.loop(minutes=20)
     async def fetch_posts(self):
+        print("[LOOP] Loop started")
         for guild_config in self.config["guilds"]:
             guild: Guild = self.bot.get_guild(guild_config["guild-id"])
             guild_channels = guild_config["channels"]
@@ -89,10 +91,11 @@ class BHVTuberGossip(commands.Cog):
                     last_floor = await fetch_thread_posts(target_thread, channel)
                     target[2] = last_floor + 1
         self.save_config()
+        print("[LOOP] Loop completed successfully")
     
-    @fetch_posts.after_loop()
+    @fetch_posts.after_loop
     async def fetch_posts_stopped(self):
-        print("The bot stopped")
+        print("[LOOP] The bot stopped")
     
     # Basic commands
     @commands.command()
