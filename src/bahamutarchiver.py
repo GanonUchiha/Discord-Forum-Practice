@@ -74,7 +74,7 @@ class BahamutAchiver(commands.Cog):
         match archive_range.value:
             case 1: # Main Post
                 post = BahamutPost(posts[0], post_url)
-                thread: Thread =await self.archive_post(post)
+                thread: Thread = await self.archive_post(post)
                 
                 # Send final message
                 await interaction.followup.send(
@@ -102,9 +102,11 @@ class BahamutAchiver(commands.Cog):
             case 3: # Whole Thread
                 num_pages = int(pages_btn_row.find_all("a")[-1].text)
                 print(num_pages)
+                user = interaction.user
+                channel = interaction.channel
                 for i in range(1, num_pages+1):
                     page_url = post_url + f"&page={i}"
-                    print(page_url)
+                    print(f"Page url: {page_url}")
 
                     # Fetch the posts for the page
                     response: requests.Response = get_webpage(page_url)
@@ -115,9 +117,8 @@ class BahamutAchiver(commands.Cog):
                     thread_urls = "\n".join([thr.jump_url for thr in created_threads])
 
                     # Send final message
-                    await interaction.followup.send(
-                        content="[Page{}] Threads created at {}:\n{}".format(i, self.selected_channel.name, thread_urls),
-                        ephemeral=False
+                    await channel.send(
+                        content="[Page{}] {}, Threads are created at {}:\n{}".format(i, user.mention, self.selected_channel.name, thread_urls),
                     )
                     sleep(10)
             case _:
@@ -133,7 +134,7 @@ class BahamutAchiver(commands.Cog):
             post = BahamutPost(post_raw, page_url)
             thread: Thread = await self.archive_post(post, thread_title=thread_title)
             created_threads.append(thread)
-            sleep(1)
+            sleep(2)
         
         return created_threads
     
@@ -141,6 +142,8 @@ class BahamutAchiver(commands.Cog):
         if post.title == "No Title":
             post.title = thread_title
         post_content = post.export(include_header=True)
+        post_hashtags = post.hashtags
+        applied_tags = [tag for tag in self.selected_channel.available_tags if tag.name in post_hashtags]
 
         if len(post_content) > 2000: # Longer posts Are sent as text files
             with Path("content.txt").open("w") as fp:
@@ -149,14 +152,16 @@ class BahamutAchiver(commands.Cog):
                 # Create the thread
                 thread, _ = await self.selected_channel.create_thread(
                     name=f"{post.title} \#{post.floor}",
-                    file=discord.File(path)
+                    file=discord.File(path),
+                    applied_tags=applied_tags
                 )
                 return thread
         else:
             # Create the thread
             thread, _ = await self.selected_channel.create_thread(
                 name=f"{post.title} \#{post.floor}",
-                content=post_content
+                content=post_content,
+                applied_tags=applied_tags
             )
             return thread
 

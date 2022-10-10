@@ -70,12 +70,11 @@ class BahamutPost:
         
         return self.SEPARATOR.join(output)
 
-    def extract(self, extract_hashtags: bool = False):
+    def extract(self):
         
         self.extract_post_header()
         self.extract_post_body()
-        if extract_hashtags:
-            self.extract_hashtags_from_text()
+        self.extract_hashtags_from_text()
 
     def extract_post_header(self):
         '''
