@@ -1,4 +1,5 @@
 
+from pathlib import Path
 import requests
 from typing import Union, List, Tuple, Optional
 from abc import ABC, abstractmethod
@@ -48,8 +49,8 @@ class BahamutAchiver(commands.Cog):
     @app_commands.command(name="bh-archive", description="Archive a post at bahamut as a DC forum post")
     @app_commands.choices(archive_range=[
         Choice(name="First Post", value=1),
-        Choice(name="Page", value=2),
-        Choice(name="Thread", value=3),
+        Choice(name="Full Page", value=2),
+        Choice(name="Full Thread", value=3),
     ])
     @app_commands.rename(archive_range="range", post_url="url")
     async def bahamut_archive(self, interaction: Interaction, archive_range: Choice[int], post_url: str):
@@ -67,40 +68,58 @@ class BahamutAchiver(commands.Cog):
 
         response: requests.Response = get_webpage(post_url)
         soup = BeautifulSoup(response.text, features="lxml")
-        is_main_page = (soup.find("p", attrs={"class": "BH-pagebtnA"}) != None)
+        pages_btn_row = soup.find("p", attrs={"class": "BH-pagebtnA"})
         posts: List[Tag] = get_posts(soup)
         
         match archive_range.value:
-            case 1: # First Page
+            case 1: # Main Post
                 post = BahamutPost(posts[0], post_url)
                 thread: Thread =await self.archive_post(post)
                 
                 # Send final message
                 await interaction.followup.send(
-                    content="Thread created at {}: {}".format(self.selected_channel.name, thread.jump_url),
+                    content="Threads created at {}: {}".format(self.selected_channel.name, thread.jump_url),
                     ephemeral=False
                 )
-            case 2 | 3 if not is_main_page: # Main Post
+            case 2: # Full Page
                 created_threads = await self.archive_page(posts, post_url)
                 thread_urls = "\n".join([thr.jump_url for thr in created_threads])
 
                 # Send final message
                 await interaction.followup.send(
-                    content="Thread created at {}:\n{}".format(self.selected_channel.name, thread_urls),
+                    content="Threads created at {}:\n{}".format(self.selected_channel.name, thread_urls),
+                    ephemeral=False
+                )
+            case 3 if pages_btn_row == None:
+                created_threads = await self.archive_page(posts, post_url)
+                thread_urls = "\n".join([thr.jump_url for thr in created_threads])
+
+                # Send final message
+                await interaction.followup.send(
+                    content="Threads created at {}:\n{}".format(self.selected_channel.name, thread_urls),
                     ephemeral=False
                 )
             case 3: # Whole Thread
-                if soup.find("p", attrs={"class": "BH-pagebtnA"}):
-                    pass
-                else:
-                    created_threads = await self.archive_page(posts, post_url)
+                num_pages = int(pages_btn_row.find_all("a")[-1].text)
+                print(num_pages)
+                for i in range(1, num_pages+1):
+                    page_url = post_url + f"&page={i}"
+                    print(page_url)
+
+                    # Fetch the posts for the page
+                    response: requests.Response = get_webpage(page_url)
+                    soup = BeautifulSoup(response.text, features="lxml")
+                    page_posts: List[Tag] = get_posts(soup)
+
+                    created_threads = await self.archive_page(page_posts, page_url)
                     thread_urls = "\n".join([thr.jump_url for thr in created_threads])
 
                     # Send final message
                     await interaction.followup.send(
-                        content="Thread created at {}:\n{}".format(self.selected_channel.name, thread_urls),
+                        content="[Page{}] Threads created at {}:\n{}".format(i, self.selected_channel.name, thread_urls),
                         ephemeral=False
                     )
+                    sleep(10)
             case _:
                 # Send message
                 await interaction.followup.send(
@@ -114,6 +133,7 @@ class BahamutAchiver(commands.Cog):
             post = BahamutPost(post_raw, page_url)
             thread: Thread = await self.archive_post(post, thread_title=thread_title)
             created_threads.append(thread)
+            sleep(1)
         
         return created_threads
     
@@ -121,12 +141,24 @@ class BahamutAchiver(commands.Cog):
         if post.title == "No Title":
             post.title = thread_title
         post_content = post.export(include_header=True)
-        # Create the thread
-        thread, _ = await self.selected_channel.create_thread(
-            name=f"{post.title} \#{post.floor}",
-            content=post_content
-        )
-        return thread
+
+        if len(post_content) > 2000: # Longer posts Are sent as text files
+            with Path("content.txt").open("w") as fp:
+                fp.write(post_content)
+            with Path("content.txt")as path:
+                # Create the thread
+                thread, _ = await self.selected_channel.create_thread(
+                    name=f"{post.title} \#{post.floor}",
+                    file=discord.File(path)
+                )
+                return thread
+        else:
+            # Create the thread
+            thread, _ = await self.selected_channel.create_thread(
+                name=f"{post.title} \#{post.floor}",
+                content=post_content
+            )
+            return thread
 
     @app_commands.command(name="bh-set-channel", description="Set default channel to send the archive to")
     async def bh_select_channel(self, interaction: Interaction):

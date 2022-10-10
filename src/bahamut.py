@@ -170,7 +170,7 @@ class BahamutPost:
 
 def get_posts(soup: BeautifulSoup) -> List[Tag]:
     sections: List[Tag] = soup.find_all("section", attrs={"class": "c-section"})
-    return [tag for tag in sections if "id" in tag.attrs]
+    return [tag for tag in sections if "id" in tag.attrs and tag.attrs["id"].startswith("post")]
 
 def get_webpage(url: str) -> requests.Response:
     headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
