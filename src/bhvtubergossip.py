@@ -136,7 +136,6 @@ async def fetch_thread_posts(target_thread: BHThread, channel: ForumChannel) -> 
         page_posts: List[Tag] = get_posts(soup)
 
         last_floor = await archive_page(target_thread, page_posts, page_url, channel)
-        sleep(1)
     
     return last_floor
 
@@ -149,7 +148,7 @@ async def archive_page(target_thread: BHThread, posts_raw: List[Tag], page_url: 
             continue
         await archive_post(target_thread, post, channel)
         last_floor = int(post.floor)
-        sleep(3)
+        sleep(5)
     
     return last_floor
 
