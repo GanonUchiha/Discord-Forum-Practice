@@ -10,21 +10,23 @@ URL_PREFIX = "https://forum.gamer.com.tw/"
 
 class PostMetadata:
 
-    def __init__(self, title: str, floor: str, username: str, userid: str, link: str):
+    def __init__(self, title: str, floor: str, username: str, userid: str, link: str, time: str):
         self.title = title
         self.floor = floor
         self.username = username
         self.userid = userid
         self.link = link
+        self.time = time
     
     @property
     def info(self):
-        return "{title} `#{floor}`\nAuthor: {username}({userid})\nLink: <{link}>".format(
+        return "{title} `#{floor}`\nAuthor: {username}({userid})\nLink: <{link}>\nTime: {time}".format(
             title = self.title,
             floor = self.floor,
             username = self.username,
             userid = self.userid,
-            link = self.link
+            link = self.link,
+            time=self.time
         )
 
 class BahamutPost:
@@ -94,6 +96,7 @@ class BahamutPost:
             post_title = "No Title"
         post_floor = post_header.find("a", attrs={"class": "tippy-gpbp"}).attrs["data-floor"]
         post_href = post_header.find("a", attrs={"class": "tippy-gpbp"}).attrs["href"]
+        post_time = post_header.find("a", attrs={"class": "edittime tippy-post-info"}).attrs["data-mtime"]
         post_username = post_header.find("a", attrs={"class": "username"}).text
         post_userid = post_header.find("a", attrs={"class": "userid"}).text
         # print("#{} by {}({})".format(post_floor, post_username, post_userid))
@@ -108,7 +111,8 @@ class BahamutPost:
             "floor": post_floor,
             "username": post_username,
             "userid": post_userid,
-            "link": post_link
+            "link": post_link,
+            "time": post_time
         }
         self.metadata = PostMetadata(**post_metadata)
 
