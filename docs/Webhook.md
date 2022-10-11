@@ -9,3 +9,6 @@
     For more information, please refer to the [Discord Developer Portal](https://discord.com/developers/applications).  
     Do not share these information to anyone.
 1. Run `python src/webhook.py` in your command prompt, and you should see the login information showing up in the command prompt.
+
+## Environment
+Please refer to [this page](/README.md#environment).

@@ -33,7 +33,7 @@ This project uses the following packages:
 Detailed packages and versions can be found in `requirements.yml`. To create an identical virtual environment in Anaconda, use the command `conda env create -f requirements.yml`.
 
 ## Discord Webhook Demo
-Please refer to [this page](/Webhook.md).
+Please refer to [this page](/docs/Webhook.md).
 
 ## Discord Bot for Archiving Bahamut Forum Threads
-Please refer to [this page](/BH-vtb.md).
+Please refer to [this page](/docs/BH-vtb.md).
