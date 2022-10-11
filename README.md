@@ -12,10 +12,12 @@ At first, I was curious about how a bot can be used to manipulate a forum channe
     BOT_ID = "Your Bot ID"
     BOT_TOKEN = "Your Bot Token"
     ```
-    For more information, please refer to the [Discord Developer Portal](https://discord.com/developers/applications).  
+    For more information, please refer to [Discord Developer Portal](https://discord.com/developers/applications).  
     Do not share your bot token to anyone.
 1. Run `python src/bot_main.py` in your command prompt, and you should see the login information showing up in the command prompt.
 1. Every time you create new slash commands or modify them, you have to use `!sync` command in Discord for the new configuations to take effect.
+
+## Commands
 
 ## Environment
 
@@ -30,7 +32,7 @@ This project uses the following packages:
 
 *This version of the package was the latest version at the time, and was installed from source.
 
-Detailed packages and versions can be found in `requirements.yml`. To create an identical virtual environment in Anaconda, use the command `conda env create -f requirements.yml`.
+Detailed packages and versions can be found in [requirements.yml](requirements.yml). To create an identical virtual environment in Anaconda, use the command `conda env create -f requirements.yml`.
 
 ## Discord Webhook Demo
 Please refer to [this page](/docs/Webhook.md).
