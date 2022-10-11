@@ -1,0 +1,19 @@
+{
+    "guilds": [
+        {
+            "guild-id": 0,
+            "channels": [
+                {
+                    "channel-id": 0,
+                    "BH-targets": [
+                        [
+                            0,
+                            0,
+                            0
+                        ]
+                    ]
+                }
+            ]
+        }
+    ]
+}

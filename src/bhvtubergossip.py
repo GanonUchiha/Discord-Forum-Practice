@@ -90,7 +90,7 @@ class BHVTuberGossip(commands.Cog):
                     target_thread = BHThread(target[0], target[1], target[2])
                     last_floor = await fetch_thread_posts(target_thread, channel)
                     target[2] = last_floor + 1
-        self.save_config()
+                self.save_config()
         print("[LOOP] Loop completed successfully")
     
     @fetch_posts.after_loop
@@ -192,7 +192,7 @@ async def archive_post(target_thread: BHThread, post: BahamutPost, channel: Foru
         await thread.edit(archived=True)
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(BHVTuberGossip(bot, "archive_thread_config.json"))
+    await bot.add_cog(BHVTuberGossip(bot, "config/bhvtb_config.json"))
 
 def main():
     # Setting up the bot
