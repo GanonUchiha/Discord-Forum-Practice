@@ -117,6 +117,14 @@ class BHVTuberGossip(commands.Cog):
     async def reload(self, ctx: Context):
         self.load_config()
         await ctx.send("已重新讀取目標討論版清單")
+
+    @commands.command(name="archive-all")
+    async def archive_all(self, ctx: Context, id: int):
+        threads: List[Thread] = ctx.guild.get_channel(id).threads
+        for thread in threads:
+            await thread.edit(archived=True)
+            sleep(1)
+        await ctx.send("已關閉所有討論串")
     
 async def fetch_thread_posts(target_thread: BHThread, channel: ForumChannel) -> int:
 
@@ -163,23 +171,25 @@ async def archive_post(target_thread: BHThread, post: BahamutPost, channel: Foru
     post_hashtags = post.hashtags
     applied_tags = [tag for tag in channel.available_tags if tag.name in post_hashtags]
 
-    if len(post_content) > 3000: # Longer posts Are sent as text files
+    if len(post_content) > 2000: # Longer posts Are sent as text files
         with Path("content.txt").open("w", encoding="utf8") as fp:
             fp.write(post_content)
         with Path("content.txt", encoding="utf8") as path:
             # Create the thread
-            thread: Thread = await channel.create_thread(
+            thread, _ = await channel.create_thread(
                 name=f"{post.title} {post.floor}樓",
                 file=File(path),
                 applied_tags=applied_tags[:5],
             )
+            await thread.edit(archived=True)
     else:
         # Create the thread
-        thread: Thread = await channel.create_thread(
+        thread, _ = await channel.create_thread(
             name=f"{post.title} {post.floor}樓",
             content=post_content,
             applied_tags=applied_tags[:5],
         )
+        await thread.edit(archived=True)
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(BHVTuberGossip(bot, "archive_thread_config.json"))

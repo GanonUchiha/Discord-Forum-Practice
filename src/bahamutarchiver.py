@@ -145,7 +145,7 @@ class BahamutAchiver(commands.Cog):
         post_hashtags = post.hashtags
         applied_tags = [tag for tag in self.selected_channel.available_tags if tag.name in post_hashtags]
 
-        if len(post_content) > 2500: # Longer posts Are sent as text files
+        if len(post_content) > 2000: # Longer posts Are sent as text files
             with Path("content.txt").open("w") as fp:
                 fp.write(post_content)
             with Path("content.txt")as path:
