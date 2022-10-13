@@ -27,6 +27,7 @@ This project uses the following packages:
 | beautifulsoup4 | 4.11.1 |
 | discord.py | 2.1.0a* |
 | python | 3.10.4 |
+| pandas | 1.5.0 |
 | urllib3 | 1.26.12 |
 | requests | 2.28.1 |
 
