@@ -156,6 +156,8 @@ class BHThread:
             return True
         elif post.gp < self.gp_thresh:
             return True
+        elif self.bp_thresh > 0 and post.bp >= self.bp_thresh:
+            return True
         return False
 
     async def archive_page(self, posts_raw: List[Tag], page_url: str):
@@ -265,22 +267,22 @@ class BHThreadArchiver(commands.Cog):
     async def start(self, ctx: Context):
         self.load_config()
         self.fetch_posts.start()
-        await ctx.send("已開始爬取討論版。")
+        await ctx.send("已開始獲取討論串貼文。")
 
     @commands.command()
     async def pause(self, ctx: Context):
         self.fetch_posts.stop()
-        await ctx.send("已下令暫停爬取討論版，機器人將在稍後自行停止。")
+        await ctx.send("已下令暫停獲取討論串貼文，機器人將在本輪作業結束後停止。")
 
     @commands.command()
     async def stop(self, ctx: Context):
         self.fetch_posts.cancel()
-        await ctx.send("已強制停止爬取討論版。")
+        await ctx.send("已強制停止。")
 
     @commands.command()
     async def reload(self, ctx: Context):
         self.load_config()
-        await ctx.send("已重新讀取目標討論版清單")
+        await ctx.send("已重新讀取目標討論串清單")
 
     @commands.command(name="archive-all")
     async def archive_all(self, ctx: Context, id: int):
@@ -288,7 +290,7 @@ class BHThreadArchiver(commands.Cog):
         for thread in threads:
             await thread.edit(archived=True)
             sleep(1)
-        await ctx.send("已關閉所有討論串")
+        await ctx.send("已關閉所有DC討論串")
     
     @commands.command(name="list")
     async def thread_list(self, ctx: Context):
