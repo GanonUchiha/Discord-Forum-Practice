@@ -252,73 +252,72 @@ class BHThreadArchiver(commands.Cog):
             if thr.channel.guild == ctx.guild:
                 thread_list.append("{}: bsn={}&snA={} {}樓".format(thr.channel.name, thr.bsn, thr.snA, thr.last_floor))
         await ctx.send("\n".join(thread_list))
+
+# async def fetch_thread_posts(target_thread: BHThread, channel: ForumChannel) -> int:
+
+#     response: requests.Response = get_webpage(target_thread.page_url())
+#     soup = BeautifulSoup(response.text, features="lxml")
+
+#     pages_btn_row = soup.find("p", attrs={"class": "BH-pagebtnA"})
+#     top_post = BahamutPost(get_posts(soup)[0])
+#     target_thread.set_title(top_post.title)
+
+#     num_pages = int(pages_btn_row.find_all("a")[-1].text)
+#     pages_per_batch = 5
+#     page_start = target_thread.start_page
+#     page_end = min(num_pages + 1, page_start + pages_per_batch)
+#     last_floor = target_thread.start_floor - 1
+
+#     for page in range(page_start, page_end):
+#         page_url = target_thread.page_url(page=page)
+
+#         # Fetch the posts for the page
+#         response: requests.Response = get_webpage(page_url)
+#         soup = BeautifulSoup(response.text, features="lxml")
+#         page_posts: List[Tag] = get_posts(soup)
+
+#         await archive_page(target_thread, page_posts, page_url, channel)
     
+#     return last_floor
+
+# async def archive_page(target_thread: BHThread, posts_raw: List[Tag], page_url: str, channel: ForumChannel) -> int:
+#     last_floor = 0
+
+#     for post_raw in posts_raw:
+#         post = BahamutPost(post_raw, page_url)
+#         if int(post.floor) < target_thread.start_floor:
+#             continue
+#         await archive_post(target_thread, post, channel)
+#         target_thread.last_floor = int(post.floor)
+#         sleep(5)
     
-async def fetch_thread_posts(target_thread: BHThread, channel: ForumChannel) -> int:
+#     return last_floor
 
-    response: requests.Response = get_webpage(target_thread.page_url())
-    soup = BeautifulSoup(response.text, features="lxml")
+# async def archive_post(target_thread: BHThread, post: BahamutPost, channel: ForumChannel):
+#     post.title = target_thread.title
+#     post_content = post.export(include_header=True)
+#     post_hashtags = post.hashtags
+#     applied_tags = [tag for tag in channel.available_tags if tag.name in post_hashtags]
 
-    pages_btn_row = soup.find("p", attrs={"class": "BH-pagebtnA"})
-    top_post = BahamutPost(get_posts(soup)[0])
-    target_thread.set_title(top_post.title)
-
-    num_pages = int(pages_btn_row.find_all("a")[-1].text)
-    pages_per_batch = 5
-    page_start = target_thread.start_page
-    page_end = min(num_pages + 1, page_start + pages_per_batch)
-    last_floor = target_thread.start_floor - 1
-
-    for page in range(page_start, page_end):
-        page_url = target_thread.page_url(page=page)
-
-        # Fetch the posts for the page
-        response: requests.Response = get_webpage(page_url)
-        soup = BeautifulSoup(response.text, features="lxml")
-        page_posts: List[Tag] = get_posts(soup)
-
-        await archive_page(target_thread, page_posts, page_url, channel)
-    
-    return last_floor
-
-async def archive_page(target_thread: BHThread, posts_raw: List[Tag], page_url: str, channel: ForumChannel) -> int:
-    last_floor = 0
-
-    for post_raw in posts_raw:
-        post = BahamutPost(post_raw, page_url)
-        if int(post.floor) < target_thread.start_floor:
-            continue
-        await archive_post(target_thread, post, channel)
-        target_thread.last_floor = int(post.floor)
-        sleep(5)
-    
-    return last_floor
-
-async def archive_post(target_thread: BHThread, post: BahamutPost, channel: ForumChannel):
-    post.title = target_thread.title
-    post_content = post.export(include_header=True)
-    post_hashtags = post.hashtags
-    applied_tags = [tag for tag in channel.available_tags if tag.name in post_hashtags]
-
-    if len(post_content) > 2000: # Longer posts Are sent as text files
-        with Path("content.txt").open("w", encoding="utf8") as fp:
-            fp.write(post_content)
-        with Path("content.txt", encoding="utf8") as path:
-            # Create the thread
-            thread, _ = await channel.create_thread(
-                name=f"{post.title} {post.floor}樓",
-                file=File(path),
-                applied_tags=applied_tags[:5],
-            )
-            await thread.edit(archived=True)
-    else:
-        # Create the thread
-        thread, _ = await channel.create_thread(
-            name=f"{post.title} {post.floor}樓",
-            content=post_content,
-            applied_tags=applied_tags[:5],
-        )
-        await thread.edit(archived=True)
+#     if len(post_content) > 2000: # Longer posts Are sent as text files
+#         with Path("content.txt").open("w", encoding="utf8") as fp:
+#             fp.write(post_content)
+#         with Path("content.txt", encoding="utf8") as path:
+#             # Create the thread
+#             thread, _ = await channel.create_thread(
+#                 name=f"{post.title} {post.floor}樓",
+#                 file=File(path),
+#                 applied_tags=applied_tags[:5],
+#             )
+#             await thread.edit(archived=True)
+#     else:
+#         # Create the thread
+#         thread, _ = await channel.create_thread(
+#             name=f"{post.title} {post.floor}樓",
+#             content=post_content,
+#             applied_tags=applied_tags[:5],
+#         )
+#         await thread.edit(archived=True)
 
 async def setup(bot: commands.Bot) -> None:
     # await bot.add_cog(BHThreadArchiver(bot, "config/bhvtb_config.json"))
