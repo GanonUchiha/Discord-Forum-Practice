@@ -10,23 +10,27 @@ URL_PREFIX = "https://forum.gamer.com.tw/"
 
 class PostMetadata:
 
-    def __init__(self, title: str, floor: str, username: str, userid: str, link: str, time: str):
+    def __init__(self, title: str, floor: int, username: str, userid: str, link: str, time: str, gp: int, bp: int):
         self.title = title
         self.floor = floor
         self.username = username
         self.userid = userid
         self.link = link
         self.time = time
+        self.gp = gp
+        self.bp = bp
     
     @property
     def info(self):
-        return "{title} `#{floor}`\nAuthor: {username}({userid})\nLink: <{link}>\nTime: {time}".format(
+        return "{title} `#{floor}`\t\nAuthor: {username}({userid})\nLink: <{link}>\nTime: {time}\nGP {gp}\tBP {bp}".format(
             title = self.title,
             floor = self.floor,
             username = self.username,
             userid = self.userid,
             link = self.link,
-            time=self.time
+            time = self.time,
+            gp = self.gp,
+            bp = self.bp
         )
 
 class BahamutPost:
@@ -43,7 +47,7 @@ class BahamutPost:
         self.extract()
     
     @property
-    def title(self):
+    def title(self) -> str:
         try:
             return self.metadata.title
         except:
@@ -54,11 +58,25 @@ class BahamutPost:
         self.metadata.title = new_title
 
     @property
-    def floor(self):
+    def floor(self) -> int:
         try:
             return self.metadata.floor
         except:
-            return "-1"
+            return -1
+
+    @property
+    def gp(self) -> int:
+        try:
+            return self.metadata.gp
+        except:
+            return 0
+
+    @property
+    def bp(self) -> int:
+        try:
+            return self.metadata.bp
+        except:
+            return 0
     
     def export(self, include_header: bool = False, include_hashtags: bool = False) -> str:
 
@@ -71,6 +89,10 @@ class BahamutPost:
             output.append("Hashtags: {}".format(", ".join(self.hashtags)))
         
         return self.SEPARATOR.join(output)
+    
+    @property
+    def info(self) -> str:
+        return self.metadata.info
 
     def extract(self):
         
@@ -99,6 +121,8 @@ class BahamutPost:
         post_time = post_header.find("a", attrs={"class": "edittime tippy-post-info"}).attrs["data-mtime"]
         post_username = post_header.find("a", attrs={"class": "username"}).text
         post_userid = post_header.find("a", attrs={"class": "userid"}).text
+        post_gp = post_header.find("span", attrs={"class": "postgp"}).span.text
+        post_bp = post_header.find("span", attrs={"class": "postbp"}).span.text
         # print("#{} by {}({})".format(post_floor, post_username, post_userid))
         
         if post_href != "":
@@ -108,11 +132,13 @@ class BahamutPost:
 
         post_metadata = {
             "title": post_title,
-            "floor": post_floor,
+            "floor": int(post_floor),
             "username": post_username,
             "userid": post_userid,
             "link": post_link,
-            "time": post_time
+            "time": post_time,
+            "gp": int(post_gp),
+            "bp": int(post_bp) if post_bp != "-" else 0
         }
         self.metadata = PostMetadata(**post_metadata)
 
