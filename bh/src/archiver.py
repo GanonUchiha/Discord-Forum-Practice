@@ -4,7 +4,6 @@ import requests
 from typing import Tuple, Union, List
 from time import sleep
 from bs4 import Tag, BeautifulSoup
-import json
 import asyncio
 from collections import defaultdict
 
@@ -15,9 +14,6 @@ from discord.ext import commands, tasks
 from discord import Guild, File, Thread
 from discord.ext.commands import Context
 from discord.channel import ForumChannel
-
-import sys
-sys.path.append("../src/")
 
 from settings import BotEssentials
 from bahamut import BahamutPost, get_webpage, get_posts
@@ -180,7 +176,7 @@ class BHThread:
         full_content = post_info + post.SEPARATOR + post_content
 
         if len(full_content) > 2000: # Longer posts are sent as text files
-            path = Path("content.txt")
+            path = Path("temp/content.txt")
             with path.open("w", encoding="utf8") as fp:
                 fp.write(post_content)
             content_kwargs = {
