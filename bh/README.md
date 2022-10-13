@@ -22,7 +22,7 @@ Only files under [/bh](/bh/) are relevant.
         - Use at least `5` to activate the threshold. Any value below `5` will be ignored.
 
     *All values should be integers.
-1. Run `python src/bhvtubergossip.py` in your command prompt, and you should see the login information showing up in the command prompt.
+1. Run `python src/archiver.py` in your command prompt, and you should see the login information showing up in the command prompt.
 1. Use the command `!start` to start the process, `!pause` to gracefully stop the bot from running, and `!stop` to forcefully stop the bot.
 
 ## Environment
